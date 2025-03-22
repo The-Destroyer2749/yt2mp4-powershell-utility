@@ -1,5 +1,5 @@
 Param (
-    $link = "https://www.youtube.com/watch?v=vF6o8BkQz4Y",
+    $link,
     $tempFolder = "E:\Users\phili\YouTube\temp",
     $outputFolder = "E:\Users\phili\YouTube",
     $ffmpegLocation = "C:\Program Files\FFmpeg\bin\ffmpeg.exe",
@@ -9,14 +9,27 @@ Param (
     $audioFile,
     $subtitleFile,
     $temp,
-    $cqFactor = "1600k",
+    $bitrate,
     $hasNvidiaGpu = $true
 )
 
 $link = Read-Host -Prompt "Type in the Youtube Link You Want To Download: "
-$link = Read-Host -Prompt "Type in the bitrate you want the video to be encoded at: "
+$bitrate = Read-Host -Prompt "Type in the bitrate (in kbps) you want the video to be encoded in: "
+$bitrate = $bitrate + "k"
 
-Write-Host "`n`n"
+# error and exit the program if an invalid url in inputted
+if($link -eq "") {
+    Write-Error "The link entered is invalid"
+    exit
+}
+
+# if the user typed in an invalid bitrate then default it to 1600k and send an error
+if($bitrate -eq "") {
+    $bitrate = "1600k"
+    Write-Error "The bitrate entered is invalid"
+}
+
+Write-Host "`n"
 
 # check if the tempFolder exists, otherwise create one
 New-Item -ItemType Directory -Path $tempFolder -Force | Out-Null
@@ -51,10 +64,10 @@ $subtitleFile = Get-ChildItem -Path $tempFolder -Filter *.* -File | Where-Object
 
 # check if the files actually exist
 if (-not $videoFile -or -not $audioFile -or -not $subtitleFile) {
-    Write-Host "`n`nError: Missing required files!"
-    Write-Host "Video exists: $($videoFile -ne $null)"
-    Write-Host "Audio exists: $($audioFile -ne $null)"
-    Write-Host "Subtitle exists: $($subtitleFile -ne $null)`n`n"
+    Write-Error "`n`nError: Missing required files!"
+    Write-Error "Video exists: $($videoFile -ne $null)"
+    Write-Error "Audio exists: $($audioFile -ne $null)"
+    Write-Error "Subtitle exists: $($subtitleFile -ne $null)`n`n"
     exit
 }
 
@@ -62,9 +75,7 @@ if (-not $videoFile -or -not $audioFile -or -not $subtitleFile) {
 $outputFileName = "$($videoFile.BaseName)_combined.mp4"
 $outputFilePath = Join-Path -Path $outputFolder -ChildPath $outputFileName
 
-Write-Host "`n`nffmpeg-i "`"$($videoFile.FullName)`"" -i "`"$($audioFile.FullName)`"" -i "`"$($subtitleFile.FullName)`"" -c:v $(if($hasNvidiaGpu) { "hevc_nvenc"; "-spatial-aq"; "1" } else { "libx265" }) -b:v $cqFactor -c:a aac -b:a 192k -c:s mov_text -map 0:v:0 -map 1:a:0 -map 2:s:0 "`"$outputFilePath`""`n`n"
-
-& "$ffmpegLocation" -i "`"$($videoFile.FullName)`"" -i "`"$($audioFile.FullName)`"" -i "`"$($subtitleFile.FullName)`"" -c:v $(if($hasNvidiaGpu) { "hevc_nvenc"; "-spatial-aq"; "1" } else { "libx265" }) -b:v $cqFactor -c:a aac -b:a 192k -c:s mov_text -map 0:v:0 -map 1:a:0 -map 2:s:0 "`"$outputFilePath`""
+& "$ffmpegLocation" -i "`"$($videoFile.FullName)`"" -i "`"$($audioFile.FullName)`"" -i "`"$($subtitleFile.FullName)`"" -c:v $(if($hasNvidiaGpu) { "hevc_nvenc"; "-spatial-aq"; "1" } else { "libx265" }) -b:v $bitrate -c:a aac -b:a 192k -c:s mov_text -map 0:v:0 -map 1:a:0 -map 2:s:0 "`"$outputFilePath`""
 
 if (Test-Path -Path $outputFilePath) {
     Write-Host "Output file created Successfully"
