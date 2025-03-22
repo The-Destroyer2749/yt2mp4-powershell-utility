@@ -68,7 +68,7 @@ if (-not $videoFile -or -not $audioFile -or -not $subtitleFile) {
 $outputFileName = "$($videoFile.BaseName)_combined.mp4"
 $outputFilePath = Join-Path -Path $outputFolder -ChildPath $outputFileName
 
-& "$ffmpegLocation" -loglevel error -i "`"$($videoFile.FullName)`"" -i "`"$($audioFile.FullName)`"" -i "`"$($subtitleFile.FullName)`"" -c:v $(if($hasNvidiaGpu) { "hevc_nvenc"; "-spatial-aq"; "1" } else { "libx265" }) -b:v $bitrate -c:a aac -b:a 192k -c:s mov_text -map 0:v:0 -map 1:a:0 -map 2:s:0 "`"$outputFilePath`""
+& "$ffmpegLocation" -v quiet -stats -i "`"$($videoFile.FullName)`"" -i "`"$($audioFile.FullName)`"" -i "`"$($subtitleFile.FullName)`"" -c:v $(if($hasNvidiaGpu) { "hevc_nvenc"; "-spatial-aq"; "1" } else { "libx265" }) -b:v $bitrate -c:a aac -b:a 192k -c:s mov_text -map 0:v:0 -map 1:a:0 -map 2:s:0 "`"$outputFilePath`""
 
 if (Test-Path -Path $outputFilePath) {
     Write-Host "Output file created Successfully"
