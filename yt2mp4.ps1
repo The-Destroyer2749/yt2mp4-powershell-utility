@@ -14,16 +14,17 @@ Param (
 )
 
 $link = Read-Host -Prompt "Type in the Youtube Link You Want To Download: "
+$link = Read-Host -Prompt "Type in the bitrate you want the video to be encoded at: "
 
-Write-Host "$link`n`n"
+Write-Host "`n`n"
 
 # check if the tempFolder exists, otherwise create one
 New-Item -ItemType Directory -Path $tempFolder -Force | Out-Null
 
 # download the video, audio, and subtitle files seperately for maximum quality
-yt-dlp -f ba -x --audio-format mp3 -o "$tempFolder/%(title)s by %(creator)s on %(upload_date>%Y-%m-%d)s.%(ext)s" --ffmpeg-location $ffmpegLocation $link # download the audio file as it's best quality
-yt-dlp -f bv --embed-thumbnail --remux-video mp4 -o "$tempFolder/%(title)s by %(creator)s on %(upload_date>%Y-%m-%d)s.%(ext)s" --ffmpeg-location $ffmpegLocation $link # downlaod the video with subtitles at it's best quality
-yt-dlp --write-auto-sub --sub-lang en --skip-download -o "$tempFolder/%(title)s by %(creator)s on %(upload_date>%Y-%m-%d)s.%(ext)s" --ffmpeg-location $ffmpegLocation $link
+yt-dlp -q -f ba -x --audio-format mp3 -o "$tempFolder/%(title)s by %(creator)s on %(upload_date>%Y-%m-%d)s.%(ext)s" --ffmpeg-location $ffmpegLocation $link # download the audio file as it's best quality
+yt-dlp -q -f bv --embed-thumbnail --remux-video mp4 -o "$tempFolder/%(title)s by %(creator)s on %(upload_date>%Y-%m-%d)s.%(ext)s" --ffmpeg-location $ffmpegLocation $link # downlaod the video with subtitles at it's best quality
+yt-dlp -q --write-auto-sub --sub-lang en --skip-download -o "$tempFolder/%(title)s by %(creator)s on %(upload_date>%Y-%m-%d)s.%(ext)s" --ffmpeg-location $ffmpegLocation $link
 
 Get-ChildItem -Path $tempFolder | ForEach-Object {
     $newName = $_.Name -replace '\s', '-'
@@ -42,11 +43,11 @@ $audioFile = Get-ChildItem -Path $tempFolder -Filter *.mp3 -File | Select-Object
 $subtitleFile = Get-ChildItem -Path $tempFolder -Filter *.* -File | Where-Object { $_.Extension -in ".vtt", ".srt" } | Select-Object -First 1
 
 # debug
-Write-Host "`n`n"
-Write-Host "`"$subtitleFile`""
-Write-Host "`"$videoFile`""
-Write-Host "`"$audioFile`""
-Write-Host "`n`n"
+# Write-Host "`n`n"
+# Write-Host "`"$subtitleFile`""
+# Write-Host "`"$videoFile`""
+# Write-Host "`"$audioFile`""
+# Write-Host "`n`n"
 
 # check if the files actually exist
 if (-not $videoFile -or -not $audioFile -or -not $subtitleFile) {
