@@ -35,9 +35,9 @@ Write-Host "`n"
 New-Item -ItemType Directory -Path $tempFolder -Force | Out-Null
 
 # download the video, audio, and subtitle files seperately for maximum quality
-yt-dlp -q -f ba -x --audio-format mp3 -o "$tempFolder/%(title)s by %(creator)s on %(upload_date>%Y-%m-%d)s.%(ext)s" --ffmpeg-location $ffmpegLocation $link # download the audio file as it's best quality
-yt-dlp -q -f bv --embed-thumbnail --remux-video mp4 -o "$tempFolder/%(title)s by %(creator)s on %(upload_date>%Y-%m-%d)s.%(ext)s" --ffmpeg-location $ffmpegLocation $link # downlaod the video with subtitles at it's best quality
-yt-dlp -q --write-auto-sub --sub-lang en --skip-download -o "$tempFolder/%(title)s by %(creator)s on %(upload_date>%Y-%m-%d)s.%(ext)s" --ffmpeg-location $ffmpegLocation $link
+yt-dlp -q --progress -f ba -x --audio-format mp3 -o "$tempFolder/%(title)s by %(creator)s on %(upload_date>%Y-%m-%d)s.%(ext)s" --ffmpeg-location $ffmpegLocation $link # download the audio file as it's best quality
+yt-dlp -q --progress -f bv --embed-thumbnail --remux-video mp4 -o "$tempFolder/%(title)s by %(creator)s on %(upload_date>%Y-%m-%d)s.%(ext)s" --ffmpeg-location $ffmpegLocation $link # downlaod the video with subtitles at it's best quality
+yt-dlp -q --progress --write-auto-sub --sub-lang en --skip-download -o "$tempFolder/%(title)s by %(creator)s on %(upload_date>%Y-%m-%d)s.%(ext)s" --ffmpeg-location $ffmpegLocation $link
 
 Get-ChildItem -Path $tempFolder | ForEach-Object {
     $newName = $_.Name -replace '\s', '-'
@@ -55,13 +55,6 @@ $videoFile = Get-ChildItem -Path $tempFolder -Filter *.mp4 -File | Select-Object
 $audioFile = Get-ChildItem -Path $tempFolder -Filter *.mp3 -File | Select-Object -First 1
 $subtitleFile = Get-ChildItem -Path $tempFolder -Filter *.* -File | Where-Object { $_.Extension -in ".vtt", ".srt" } | Select-Object -First 1
 
-# debug
-# Write-Host "`n`n"
-# Write-Host "`"$subtitleFile`""
-# Write-Host "`"$videoFile`""
-# Write-Host "`"$audioFile`""
-# Write-Host "`n`n"
-
 # check if the files actually exist
 if (-not $videoFile -or -not $audioFile -or -not $subtitleFile) {
     Write-Error "`n`nError: Missing required files!"
@@ -75,7 +68,7 @@ if (-not $videoFile -or -not $audioFile -or -not $subtitleFile) {
 $outputFileName = "$($videoFile.BaseName)_combined.mp4"
 $outputFilePath = Join-Path -Path $outputFolder -ChildPath $outputFileName
 
-& "$ffmpegLocation" -i "`"$($videoFile.FullName)`"" -i "`"$($audioFile.FullName)`"" -i "`"$($subtitleFile.FullName)`"" -c:v $(if($hasNvidiaGpu) { "hevc_nvenc"; "-spatial-aq"; "1" } else { "libx265" }) -b:v $bitrate -c:a aac -b:a 192k -c:s mov_text -map 0:v:0 -map 1:a:0 -map 2:s:0 "`"$outputFilePath`""
+& "$ffmpegLocation" -loglevel error -i "`"$($videoFile.FullName)`"" -i "`"$($audioFile.FullName)`"" -i "`"$($subtitleFile.FullName)`"" -c:v $(if($hasNvidiaGpu) { "hevc_nvenc"; "-spatial-aq"; "1" } else { "libx265" }) -b:v $bitrate -c:a aac -b:a 192k -c:s mov_text -map 0:v:0 -map 1:a:0 -map 2:s:0 "`"$outputFilePath`""
 
 if (Test-Path -Path $outputFilePath) {
     Write-Host "Output file created Successfully"
