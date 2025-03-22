@@ -41,11 +41,11 @@ yt-dlp -q --progress --write-auto-sub --sub-lang en --skip-download -o "$tempFol
 
 Get-ChildItem -Path $tempFolder | ForEach-Object {
     $newName = $_.Name -replace '\s', '-'
-    Rename-Item -Path $_.FullName -NewName $newName
+    Rename-Item -Path $_.FullName -NewName $newName -Force
 }
 
 # Sanitize filenames
-Get-ChildItem -Path $tempFolder | Rename-Item -NewName { $_.Name -replace '[^a-zA-Z0-9_.-]', '-' }
+Get-ChildItem -Path $tempFolder | Rename-Item -NewName { $_.Name -replace '[^a-zA-Z0-9_.-]', '-' } -Force
 
 # Wait for downloads to finalize
 Start-Sleep -Seconds 3
@@ -79,5 +79,3 @@ else {
 }
 
 Remove-Item -Path "$tempFolder/*" -Force
-
-$temp = Read-Host -Prompt "Press enter to exit powershell"
