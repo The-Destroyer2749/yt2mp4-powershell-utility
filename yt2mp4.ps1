@@ -1,38 +1,65 @@
 Param (
-    $link,
-    $tempFolder = "E:\Users\phili\YouTube\temp",
-    $outputFolder = "E:\Users\phili\YouTube",
+    $link = "",
+    $outputFolder = "",
     $ffmpegLocation = "C:\Program Files\FFmpeg\bin\ffmpeg.exe",
-    $outputFilePath,
-    $outputFileName,
-    $videoFile,
-    $audioFile,
-    $subtitleFile,
-    $temp,
-    $bitrate,
-    $hasNvidiaGpu = $true
+    $hasNvidiaGpu = $false,
+    $bitrate = "",
+    $encoder = ""
 )
 
-$link = Read-Host -Prompt "Type in the Youtube Link You Want To Download: "
+# variables that don't change
+$outputFilePath
+$outputFileName
+$videoFile
+$audioFile
+$subtitleFile
+$temp
+$youtubeValidationRegex = "(https:\/\/youtu\.be\/.[^&?]+)|(https:\/\/www\.youtube\.com\/watch\?v=.[^&?]+)"
+$username = whoami
+$tempFolder
+
+# assuming non inputted variables
+if ($outputFolder -eq "") {
+    $outputFolder = "C:\Users\$username\youtube downloads"
+}
+
+$tempFolder = Join-Path -Path $outputFolder -ChildPath "\temp"
+
+# check if the folders exist, otherwise create them
+New-Item -ItemType Directory -Path $outputFolder -Force | Out-Null
+New-Item -ItemType Directory -Path $tempFolder -Force | Out-Null
+
+if ($hasNvidiaGpu -eq $true -and $encoder -eq "") {
+
+}
+
+
 $bitrate = Read-Host -Prompt "Type in the bitrate (in kbps) you want the video to be encoded in: "
 $bitrate = $bitrate + "k"
 
 # error and exit the program if an invalid url in inputted
-if($link -eq "") {
-    Write-Error "The link entered is invalid"
-    exit
+if($link -match $youtubeValidationRegex) {
+    while ($link -eq "") {
+        $link = Read-Host -Prompt "Type in the Youtube Link You Want To Download: "
+        if ($link -eq "") {
+            Write-Error "The link entered is invalid"
+        }
+    }
 }
 
 # if the user typed in an invalid bitrate then default it to 1600k and send an error
-if($bitrate -eq "") {
-    $bitrate = "1600k"
-    Write-Error "The bitrate entered is invalid"
+if($bitrate -as [uint] -eq $null) {
+    while ($bitrate -as [uint] -eq $null) {
+        $bitrate = Read-Host -Prompt "Type in the bitrate (in kbps) you want the video to be encoded in: "
+        if ($link -eq "") {
+            Write-Error "The bitrate entered is invalid"
+        }
+    }
 }
 
 Write-Host "`n"
 
-# check if the tempFolder exists, otherwise create one
-New-Item -ItemType Directory -Path $tempFolder -Force | Out-Null
+
 
 # download the video, audio, and subtitle files seperately for maximum quality
 yt-dlp -q --progress -f ba -x --audio-format mp3 -o "$tempFolder/%(title)s by %(creator)s on %(upload_date>%Y-%m-%d)s.%(ext)s" --ffmpeg-location $ffmpegLocation $link # download the audio file as it's best quality
