@@ -33,9 +33,6 @@ if ($hasNvidiaGpu -eq $true -and $encoder -eq "") {
 
 }
 
-$bitrate = Read-Host -Prompt "Type in the bitrate (in kbps) you want the video to be encoded in: "
-$bitrate = $bitrate + "k"
-
 # error and exit the program if an invalid url in inputted
 if($link -match $youtubeValidationRegex) {
     while ($link -eq "") {
@@ -47,14 +44,15 @@ if($link -match $youtubeValidationRegex) {
 }
 
 # if the user typed in an invalid bitrate then default it to 1600k and send an error
-if($bitrate -as [uint] -eq $null) {
-    while ($bitrate -as [uint] -eq $null) {
+if($bitrate -as [UInt32] -eq $null -or $bitrate -ne "") {
+    while ($bitrate -as [UInt32] -eq $null) {
         $bitrate = Read-Host -Prompt "Type in the bitrate (in kbps) you want the video to be encoded in: "
         if ($link -eq "") {
             Write-Error "The bitrate entered is invalid"
         }
     }
 }
+$bitrate = $bitrate + "k"
 
 Write-Host "`n"
 
