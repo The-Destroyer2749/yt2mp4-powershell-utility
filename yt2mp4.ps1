@@ -1,10 +1,15 @@
+<#
+    Yo twin
+#>
 Param (
-    $link = "",
-    $outputFolder = "",
+    [switch]$h,
+    $link,
+    $outputFolder,
     $ffmpegLocation = "C:\Program Files\FFmpeg\bin\ffmpeg.exe",
-    $hasNvidiaGpu = $false,
-    $bitrate = "",
-    $encoder = ""
+    $encoderSpeedup, # Amd, Intel, Nvidia
+    $bitrate,
+    $encoder,
+    [switch]$hevc
 )
 
 # initizing variables
@@ -17,9 +22,34 @@ $temp
 $youtubeValidationRegex = "(https:\/\/youtu\.be\/.[^&?]+)|(https:\/\/www\.youtube\.com\/watch\?v=.[^&?]+)"
 $username = whoami
 $tempFolder
+$encoderList = @(
+    @( # every computer can use these
+        "libx264",
+        "libx265"
+    ),
+    @( # just for Amd gpus
+        "h264_amf",
+        "hevc_amf"
+    )
+    @( # just for Intel gpus
+        "h264_qsv",
+        "hevc_qsv"
+    )
+    @( # just for Nvidia nvenc
+        "h264_nvenc",
+        "hevc_nvenc"
+    )
+)
+
+# help
+
+if($h) {
+    Get-Help $MyInvocation.MyCommand.Path -Full
+    exit
+}
 
 # assuming non inputted variables
-if ($outputFolder -eq "") {
+if ($outputFolder) {
     $outputFolder = "C:\Users\$username\youtube downloads"
 }
 
@@ -29,15 +59,27 @@ $tempFolder = Join-Path -Path $outputFolder -ChildPath "\temp"
 New-Item -ItemType Directory -Path $outputFolder -Force | Out-Null
 New-Item -ItemType Directory -Path $tempFolder -Force | Out-Null
 
-if ($hasNvidiaGpu -eq $true -and $encoder -eq "") {
+if ($hevc) {
+    $hevc = 1
+}
+else {
+    $hevc = 0
+}
 
+if ($encoder) {
+    switch ($encoderSpeedup) {
+        "amd" { $encoder = $encoderList[$hevc][1] }
+        "intel" { $encoder = $encoderList[$hevc][2] }
+        "nvidia" { $encoder = $encoderList[$hevc][3] }
+        Default { $encoder = $encoderList[$hevc][0] }
+    }
 }
 
 # error and exit the program if an invalid url in inputted
 if($link -match $youtubeValidationRegex) {
-    while ($link -eq "") {
+    while ($link) {
         $link = Read-Host -Prompt "Type in the Youtube Link You Want To Download: "
-        if ($link -eq "") {
+        if ($link) {
             Write-Error "The link entered is invalid"
         }
     }
@@ -47,7 +89,7 @@ if($link -match $youtubeValidationRegex) {
 if($bitrate -as [UInt32] -eq $null -or $bitrate -ne "") {
     while ($bitrate -as [UInt32] -eq $null) {
         $bitrate = Read-Host -Prompt "Type in the bitrate (in kbps) you want the video to be encoded in: "
-        if ($link -eq "") {
+        if ($bitrate) {
             Write-Error "The bitrate entered is invalid"
         }
     }
