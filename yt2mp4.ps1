@@ -1,6 +1,5 @@
-<#
-    Yo twin
-#>
+<# .SYNOPSIS #>
+
 Param (
     [switch]$h,
     $link,
@@ -9,7 +8,7 @@ Param (
     $encoderSpeedup, # Amd, Intel, Nvidia
     $bitrate,
     $encoder,
-    [switch]$hevc
+    [switch]$hevc # whether or not to make a h264 or h265 file
 )
 
 # initizing variables
@@ -42,7 +41,6 @@ $encoderList = @(
 )
 
 # help
-
 if($h) {
     Get-Help $MyInvocation.MyCommand.Path -Full
     exit
