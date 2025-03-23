@@ -7,7 +7,7 @@ Param (
     $encoder = ""
 )
 
-# variables that don't change
+# initizing variables
 $outputFilePath
 $outputFileName
 $videoFile
@@ -32,7 +32,6 @@ New-Item -ItemType Directory -Path $tempFolder -Force | Out-Null
 if ($hasNvidiaGpu -eq $true -and $encoder -eq "") {
 
 }
-
 
 $bitrate = Read-Host -Prompt "Type in the bitrate (in kbps) you want the video to be encoded in: "
 $bitrate = $bitrate + "k"
@@ -59,8 +58,6 @@ if($bitrate -as [uint] -eq $null) {
 
 Write-Host "`n"
 
-
-
 # download the video, audio, and subtitle files seperately for maximum quality
 yt-dlp -q --progress -f ba -x --audio-format mp3 -o "$tempFolder/%(title)s by %(creator)s on %(upload_date>%Y-%m-%d)s.%(ext)s" --ffmpeg-location $ffmpegLocation $link # download the audio file as it's best quality
 yt-dlp -q --progress -f bv --embed-thumbnail --remux-video mp4 -o "$tempFolder/%(title)s by %(creator)s on %(upload_date>%Y-%m-%d)s.%(ext)s" --ffmpeg-location $ffmpegLocation $link # downlaod the video with subtitles at it's best quality
@@ -74,10 +71,10 @@ Get-ChildItem -Path $tempFolder | ForEach-Object {
 # Sanitize filenames
 Get-ChildItem -Path $tempFolder | Rename-Item -NewName { $_.Name -replace '[^a-zA-Z0-9_.-]', '-' } -Force
 
-# Wait for downloads to finalize
+# Wait for downloads to finish
 Start-Sleep -Seconds 3
 
-# get the file paths of all three files downloaded
+# get the file paths of all three files that were downloaded
 $videoFile = Get-ChildItem -Path $tempFolder -Filter *.mp4 -File | Select-Object -First 1
 $audioFile = Get-ChildItem -Path $tempFolder -Filter *.mp3 -File | Select-Object -First 1
 $subtitleFile = Get-ChildItem -Path $tempFolder -Filter *.* -File | Where-Object { $_.Extension -in ".vtt", ".srt" } | Select-Object -First 1
